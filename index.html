@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Page</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        position: relative;
+        overflow: hidden; /* Hide overflow to prevent horizontal scrollbar */
+    }
+
+    #button-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    /* Define animations for falling images */
+    @keyframes fall-1 {
+        0% { top: -60px; transform: rotate(0deg); }
+        100% { top: calc(100vh - 60px); transform: rotate(360deg); }
+    }
+
+    @keyframes fall-2 {
+        0% { top: -80px; transform: rotate(0deg); }
+        100% { top: calc(100vh - 80px); transform: rotate(360deg); }
+    }
+
+    @keyframes fall-3 {
+        0% { top: -40px; transform: rotate(0deg); }
+        100% { top: calc(100vh - 40px); transform: rotate(360deg); }
+    }
+
+    .falling-image {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background-image: url('fodalogo.png');
+        background-size: contain;
+        /* Generate random horizontal position */
+        left: calc(10% + 80% * var(--pos-x));
+        /* Apply different animations and durations to each image */
+        animation: fall-1 var(--duration-1) linear infinite, 
+                   fall-2 var(--duration-2) linear infinite, 
+                   fall-3 var(--duration-3) linear infinite;
+    }
+</style>
+</head>
+<body>
+
+<!-- Falling images -->
+<div class="falling-image" style="--pos-x: 0.1; --duration-1: 3s; --duration-2: 4s; --duration-3: 2s;"></div>
+<div class="falling-image" style="--pos-x: 0.3; --duration-1: 4s; --duration-2: 2s; --duration-3: 3s;"></div>
+<div class="falling-image" style="--pos-x: 0.5; --duration-1: 2s; --duration-2: 3s; --duration-3: 4s;"></div>
+<div class="falling-image" style="--pos-x: 0.7; --duration-1: 3s; --duration-2: 4s; --duration-3: 2s;"></div>
+<div class="falling-image" style="--pos-x: 0.9; --duration-1: 4s; --duration-2: 2s; --duration-3: 3s;"></div>
+
+<!-- Button container -->
+<div id="button-container">
+    <button onclick="redirectToMapPage()">Go to Map</button>
+</div>
+
+<script>
+    function redirectToMapPage() {
+        window.location.href = "map.html";
+    }
+</script>
+
+</body>
+</html>

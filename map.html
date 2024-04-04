@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fo Da Map</title>
+    <link rel="icon" href="fodalogo.png">
+
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        #map {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background-image: url('fodamap.jpeg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-image: url('flag.png');
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transform: translate(-5%, -90%);
+        }
+
+        .delete-button,
+        .add-button,
+        .delete-all-button {
+            position: absolute;
+            bottom: 10px;
+            padding: 5px 10px;
+            background-color: #fff;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            right: 100px;
+        }
+
+        .add-button {
+            right: 10px;
+        }
+
+        .delete-all-button {
+            right: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <button class="delete-button" onclick="toggleDeleteMode()">Delete Marker</button>
+    <button class="delete-all-button" onclick="deleteAllMarkers()">Delete All Markers</button>
+    <button class="add-button" onclick="toggleAddMode()">Add Marker</button>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.6.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/13.6.1/firebase-firestore.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDNuYP3nF-C4q_tmG-tGmSefcUfBiY3sM",
+            authDomain: "fodaboysmap.firebaseapp.com",
+            projectId: "fodaboysmap",
+            storageBucket: "fodaboysmap.appspot.com",
+            messagingSenderId: "437708253780",
+            appId: "1:437708253780:web:5a7c0b73ecc46422b3dbc1",
+            measurementId: "G-XEC0REJ47P"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        // Inicialize o Firestore
+        const db = getFirestore();
+
+        // Exemplo de carregar marca??es do Firestore quando a p?gina for carregada
+        window.addEventListener('load', function() {
+            loadMarkersFromFirestore(); // Carrega as marca??es do Firestore
+        });
+
+        var markers = [];
+        var deleteMode = false;
+
+        function loadMarkersFromFirestore() {
+            db.collection("markers").get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    addMarker(data.x, data.y);
+                });
+            })
+            .catch((error) => {
+                console.error("Erro ao carregar marca??es: ", error);
+            });
+        }
+
+        // Function to add a marker at a specific position
+        function addMarker(x, y) {
+            var map = document.getElementById('map');
+            var marker = document.createElement('div');
+            marker.className = 'marker';
+            marker.style.left = x + '%';
+            marker.style.top = y + '%';
+            map.appendChild(marker);
+            markers.push({ x: x, y: y });
+        }
+
+        function addMarkerToFirestore(x, y) {
+            db.collection("markers").add({
+                x: x,
+                y: y
+            })
+            .then((docRef) => {
+                console.log("Marca??o adicionada com ID: ", docRef.id);
+            })
+            .catch((error) => {
+                console.error("Erro ao adicionar marca??o: ", error);
+            });
+        }
+
+        // Function to delete a marker
+        function deleteMarker(markerIndex) {
+            var map = document.getElementById('map');
+            map.removeChild(map.childNodes[markerIndex]);
+            deleteMarkerFromFirestore(markerIndex); // Delete the marker from Firestore
+            markers.splice(markerIndex, 1);
+        }
+
+        // Function to delete a marker from Firestore
+        function deleteMarkerFromFirestore(markerId) {
+            db.collection("markers").doc(markerId).delete()
+                .then(() => {
+                    console.log("Marker deleted successfully from Firestore.");
+                })
+                .catch((error) => {
+                    console.error("Error deleting marker from Firestore:", error);
+                });
+        }
+
+        // Function to delete all markers
+        function deleteAllMarkers() {
+            var map = document.getElementById('map');
+            map.innerHTML = ''; // Clear all markers from the map
+            deleteAllMarkersFromFirestore(); // Delete all markers from Firestore
+            markers = []; // Clear the markers array
+        }
+
+        // Function to delete all markers from Firestore
+        function deleteAllMarkersFromFirestore() {
+            db.collection("markers").get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    doc.ref.delete().then(() => {
+                        console.log("Marker deleted successfully from Firestore.");
+                    }).catch((error) => {
+                        console.error("Error deleting marker from Firestore:", error);
+                    });
+                });
+            }).catch((error) => {
+                console.error("Error getting documents from Firestore:", error);
+            });
+        }
+
+
+        // Function to toggle delete mode
+        function toggleDeleteMode() {
+            deleteMode = !deleteMode;
+        }
+
+        // Function to toggle add mode
+        function toggleAddMode() {
+            deleteMode = false;
+        }
+
+        // Function to handle click events and add or delete markers
+        function handleMapClick(event) {
+            if (deleteMode) {
+                var map = document.getElementById('map');
+                var rect = map.getBoundingClientRect();
+                var offsetX = (event.clientX - rect.left) / map.offsetWidth * 100;
+                var offsetY = (event.clientY - rect.top) / map.offsetHeight * 100;
+                var clickedMarkerIndex = getClickedMarkerIndex(offsetX, offsetY);
+                if (clickedMarkerIndex !== -1) {
+                    deleteMarker(clickedMarkerIndex);
+                }
+            } else {
+                var map = document.getElementById('map');
+                var rect = map.getBoundingClientRect();
+                var offsetX = (event.clientX - rect.left) / map.offsetWidth * 100;
+                var offsetY = (event.clientY - rect.top) / map.offsetHeight * 100;
+                addMarker(offsetX, offsetY);
+            }
+        }
+
+        // Function to get index of clicked marker
+        function getClickedMarkerIndex(offsetX, offsetY) {
+            var map = document.getElementById('map');
+            var markers = document.getElementsByClassName('marker');
+            for (var i = 0; i < markers.length; i++) {
+                var marker = markers[i];
+                var markerX = parseFloat(marker.style.left);
+                var markerY = parseFloat(marker.style.top);
+                if (Math.abs(markerX - offsetX) < 0.5 && Math.abs(markerY - offsetY) < 0.5) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        // Add event listener to the map to handle clicks
+        document.getElementById('map').addEventListener('click', handleMapClick);
+    </script>
+
+</body>
+
+</html>
